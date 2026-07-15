@@ -57,6 +57,13 @@ def test_devcontainer_declares_gemini_key_secret():
     assert "GEMINI_API_KEY" in dc.get("secrets", {})
 
 
+def test_devcontainer_pins_model_in_env():
+    """A bare `gemini` (not just `make start`) must default to the pinned model,
+    so the model is fixed in the container environment too."""
+    dc = _load_jsonc(_read(".devcontainer", "devcontainer.json"))
+    assert dc.get("containerEnv", {}).get("GEMINI_MODEL", "").startswith("gemini-")
+
+
 # --- .env.example ------------------------------------------------------------
 def test_env_example_documents_vars():
     env = _read(".env.example")

@@ -5,9 +5,19 @@
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
 
   // Installs Gemini CLI (pinned via GEMINI_CLI_VERSION), preloads
-  // ~/.gemini/settings.json (auth=gemini-api-key, telemetry off), and validates
-  // the key with a live round-trip. Succeeds even before a key is added.
+  // ~/.gemini/settings.json (auth=gemini-api-key, telemetry off, subagents off,
+  // model routing off), and validates the key with a live round-trip. Succeeds
+  // even before a key is added.
   "postCreateCommand": "bash scripts/setup.sh",
+
+  // Pin the model in the container environment so even a bare `gemini` (not just
+  // `make start`) defaults to 2.5-flash. This is the env-var precedence lever
+  // (higher than settings.json model.name), guarding against known bugs where
+  // model.name alone gets overridden by the router/hardcoded defaults.
+  // Advanced override: run `gemini --model <name>`.
+  "containerEnv": {
+    "GEMINI_MODEL": "gemini-2.5-flash"
+  },
 
   // The student's ONLY required setup: add this Codespace secret.
   //   Settings > Codespaces > Secrets:  GEMINI_API_KEY
