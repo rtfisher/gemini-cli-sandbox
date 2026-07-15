@@ -22,6 +22,11 @@ if [ ! -f "$GEMINI_SETTINGS_FILE" ]; then
   bash "${REPO_ROOT}/scripts/setup.sh"
 fi
 
-info "launching Gemini CLI (model ${GEMINI_MODEL}, free tier)"
-# gemini reads GEMINI_API_KEY from the environment and auth type from settings.json.
-exec gemini "$@"
+info "launching Gemini CLI (model ${GEMINI_MODEL}, subagents off, free tier)"
+# Pin the model with belt-and-suspenders precedence: the --model flag is
+# documented as "always used" (highest precedence) and GEMINI_MODEL (exported by
+# lib.sh) is next — together they defeat the auto model-router and known bugs
+# where settings.json model.name alone gets overridden. Auth type + the quota
+# guards (subagents/router off) come from ~/.gemini/settings.json; the API key
+# comes from GEMINI_API_KEY. A user-supplied --model in "$@" still wins (last one).
+exec gemini --model "$GEMINI_MODEL" "$@"

@@ -36,6 +36,15 @@ def test_settings_template_preconfigures_apikey_and_no_telemetry():
     assert "name" in s["model"]
 
 
+def test_settings_template_protects_free_quota():
+    """The two settings that blew the free budget in testing must stay off:
+    subagent auto-delegation (~75% of token burn) and the model router (which
+    overrode the pinned model and drifted to a costlier one)."""
+    s = json.loads(_read("config", "settings.template.json"))
+    assert s["experimental"]["enableAgents"] is False, "subagents must be disabled"
+    assert s["experimental"]["useModelRouter"] is False, "model router must be disabled"
+
+
 # --- devcontainer ------------------------------------------------------------
 def test_devcontainer_is_valid_jsonc():
     dc = _load_jsonc(_read(".devcontainer", "devcontainer.json"))

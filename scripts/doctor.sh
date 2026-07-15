@@ -27,7 +27,17 @@ info "[2/4] settings"
 if [ -f "$GEMINI_SETTINGS_FILE" ] && jq -e . "$GEMINI_SETTINGS_FILE" >/dev/null 2>&1; then
   authtype="$(jq -r '.security.auth.selectedType // "?"' "$GEMINI_SETTINGS_FILE")"
   model="$(jq -r '.model.name // "?"' "$GEMINI_SETTINGS_FILE")"
+  agents="$(jq -r '.experimental.enableAgents // true' "$GEMINI_SETTINGS_FILE")"
+  router="$(jq -r '.experimental.useModelRouter // true' "$GEMINI_SETTINGS_FILE")"
   ok "${GEMINI_SETTINGS_FILE} (auth=${authtype}, model=${model})"
+  # Quota guards: subagents and model routing were the two things that blew the
+  # free budget in testing. Confirm both are off so cost stays predictable.
+  if [ "$agents" = "false" ] && [ "$router" = "false" ]; then
+    ok "quota guards active: subagents off, model routing off"
+  else
+    warn "quota guards NOT fully active (enableAgents=${agents}, useModelRouter=${router})"
+    note "these default to on and can burn the free tier fast — re-run 'make setup' to restore the guarded config"
+  fi
 else
   err "missing/invalid ${GEMINI_SETTINGS_FILE} — run 'make setup'"
   FAIL=1
@@ -77,8 +87,13 @@ else
 fi
 
 echo
-note "Free-tier reality (subject to change; exact numbers live in your AI Studio dashboard):"
-note "  ~250 requests/day, Flash-only for an unpaid AI Studio key. Hitting it looks like HTTP 429."
+note "Free-tier reality (subject to change; live numbers: aistudio.google.com/rate-limit):"
+note "  Three separate meters run at once — you can trip ANY of them and get HTTP 429:"
+note "    * ~250 requests/day (CLI unpaid-key cap, Flash-only)"
+note "    * ~10 requests/minute (burst limit)"
+note "    * ~250K tokens/minute (a single big/subagent turn can blow this alone)"
+note "  The per-minute TOKEN limit — not the daily count — is the usual wall. Keeping"
+note "  subagents off (above) is the biggest lever, since each one re-sends full context."
 echo
 if [ "$FAIL" -eq 0 ]; then
   if [ "$RATELIMITED" -eq 1 ]; then

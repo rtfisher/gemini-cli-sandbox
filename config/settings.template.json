@@ -1,5 +1,5 @@
 {
-  "//": "Template for ~/.gemini/settings.json. setup.sh installs this (patching model.name from GEMINI_MODEL) so students are never prompted for auth or telemetry.",
+  "//": "Template for ~/.gemini/settings.json. setup.sh installs it (patching model.name from GEMINI_MODEL) so students are never prompted AND the free-tier quota is protected. The two quota-critical settings are experimental.enableAgents=false (subagent auto-delegation caused ~75% of token burn in testing) and experimental.useModelRouter=false (stops silent drift to a costlier auto-routed model and keeps the pinned model).",
   "security": {
     "auth": {
       "selectedType": "gemini-api-key"
@@ -13,5 +13,20 @@
   },
   "model": {
     "name": "gemini-2.5-flash"
+  },
+  "experimental": {
+    "enableAgents": false,
+    "useModelRouter": false
+  },
+  "general": {
+    "plan": {
+      "modelRouting": false
+    },
+    "checkpointing": {
+      "enabled": false
+    }
+  },
+  "skills": {
+    "enabled": false
   }
 }

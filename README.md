@@ -52,16 +52,41 @@ personal `@gmail.com`. The key, once created, works anywhere.
 
 ## What the free tier gives you — and what hitting the limit looks like
 
-The free (unpaid AI Studio key) tier via Gemini CLI is **Flash-only** and capped
-at roughly **250 requests/day per key** (exact numbers now live in your AI Studio
-dashboard at <https://aistudio.google.com/rate-limit>; treat 250/day as the
-documented CLI figure, *subject to change*). Each student uses their own key, so
-it's 250/day *each*.
+The free (unpaid AI Studio key) tier is **Flash-only**. The trap is that "free"
+is governed by **three separate meters running at once** — trip *any* one and you
+get **HTTP 429**:
 
-**When you hit the cap**, requests return **HTTP 429**. `make doctor` reports
-this as *healthy but throttled* (it's not broken — the daily window just resets).
-Keep sessions economical: the `GEMINI.md` in this repo already nudges the agent
-to be sparing with tool calls.
+| Meter | Rough free-tier value | What trips it |
+|---|---|---|
+| Requests / day | ~250 (CLI unpaid-key cap) | many prompts across the day |
+| Requests / minute | ~10 | rapid bursts |
+| **Tokens / minute** | **~250,000** | **one big turn — this is the usual wall** |
+
+Exact numbers live in your AI Studio dashboard (<https://aistudio.google.com/rate-limit>)
+and are subject to change. The counter-intuitive part: **you can be at 10% of your
+daily requests and still get 429'd** because a single large turn blew the
+**per-minute token** limit. `make doctor` explains all three.
+
+### Why this repo ships with subagents and model-routing OFF
+
+Early testing showed a "simple" task burning **27 API requests and 323,000 input
+tokens in ~12 minutes** — because two Gemini CLI defaults quietly multiply usage:
+
+- **Subagents** (`experimental.enableAgents`, default *on*) auto-delegate work to
+  helper agents that each re-send full context. In that test, **21 of 27 requests
+  and ~75% of all tokens** came from subagents.
+- **The model router** (`experimental.useModelRouter`, default *on*) makes the
+  effective model `auto` and silently picked `gemini-3.5-flash` instead of the
+  pinned model — and subagents inherit that routing.
+
+So this repo's `settings.json` **disables both**, and `start.sh` pins the model
+three ways (`--model` flag + `GEMINI_MODEL` env + settings) because `model.name`
+alone is known to get overridden. `make doctor` verifies the guards are active.
+The result is predictable, single-model, no-fan-out sessions that fit the free
+tier. **Trade-off:** you lose auto-delegation and the `/model` switcher — both
+intentional for a low-cost, reproducible workshop. To experiment with them, set
+`experimental.enableAgents` / `experimental.useModelRouter` back to `true` in
+`~/.gemini/settings.json` (and expect much faster quota burn).
 
 > **One honest caveat:** because Google changed CLI access at the June 2026
 > deprecation, it isn't officially guaranteed that *unpaid* keys keep working in
