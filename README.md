@@ -1,5 +1,7 @@
 # Gemini CLI — student sandbox (GitHub Codespace)
 
+[![CI](https://github.com/rtfisher/gemini-cli-sandbox/actions/workflows/ci.yml/badge.svg)](https://github.com/rtfisher/gemini-cli-sandbox/actions/workflows/ci.yml)
+
 A ready-to-run GitHub Codespace for experimenting with Google's **Gemini CLI**.
 The CLI is **pre-installed**; a student's only setup step is pasting one **free**
 API key. No Anthropic key, no billing, no credit card.
