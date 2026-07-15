@@ -1,0 +1,77 @@
+name: CI
+
+# Offline jobs (lint + tests) run on every push and PR — no secrets, so they
+# pass on forks too. The live smoke job makes a real Gemini API call, which
+# spends the small free-tier daily budget, so it runs only on manual dispatch
+# and once daily — never on every commit.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 6 * * *"   # daily 06:23 UTC live smoke (if secret configured)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------- lint ------
+  lint:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck (error severity; SC1091 = dynamic source path)
+        run: shellcheck --severity=error -e SC1091 scripts/*.sh
+      - name: bash syntax check
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+
+  # --------------------------------------------------------------- tests ------
+  tests:
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/requirements.txt
+      - name: install test deps
+        run: pip install -r tests/requirements.txt
+      - name: offline test suite
+        run: python -m pytest tests/ -q
+
+  # ---------------------------------------------- live smoke (gated) ----------
+  # Real round-trip against the Gemini API. Only on dispatch/schedule, and only
+  # if GEMINI_API_KEY is configured — otherwise it self-skips (never red).
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: skip if no key
+        id: guard
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY not configured — skipping live smoke (this is fine)."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.run == 'true'
+        with:
+          node-version: "20"
+      - name: setup (install CLI + settings, validate key)
+        if: steps.guard.outputs.run == 'true'
+        run: make setup
+      - name: doctor (live round-trip; throttled != failure)
+        if: steps.guard.outputs.run == 'true'
+        run: make doctor

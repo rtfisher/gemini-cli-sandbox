@@ -1,0 +1,119 @@
+# Gemini CLI — student sandbox (GitHub Codespace)
+
+A ready-to-run GitHub Codespace for experimenting with Google's **Gemini CLI**.
+The CLI is **pre-installed**; a student's only setup step is pasting one **free**
+API key. No Anthropic key, no billing, no credit card.
+
+## Quickstart (≈2 minutes)
+
+1. **Get a free API key** — go to <https://aistudio.google.com/apikey> and create
+   a key. It's free, no billing. *(On a school/Workspace Google account that
+   blocks AI Studio, use a personal `@gmail.com` — see [Why an API key](#why-an-api-key-and-not-log-in-with-google).)*
+2. **Add it as a Codespace secret** — repo/account **Settings → Codespaces →
+   Secrets**, name it **`GEMINI_API_KEY`**, paste the key.
+3. **Open the repo in a Codespace.** `postCreateCommand` runs setup automatically:
+   installs Gemini CLI, preloads `~/.gemini/settings.json` (so you're never
+   prompted for auth or telemetry), and checks your key with a live call.
+4. **Verify and run:**
+   ```bash
+   make doctor     # confirms the key works end-to-end
+   make start      # launches Gemini CLI   (or just run: gemini)
+   ```
+
+That's the whole flow. Once the key is set, `gemini` just works.
+
+### Local (outside a Codespace)
+```bash
+cp .env.example .env      # put GEMINI_API_KEY in it
+make setup && make doctor && make start
+```
+
+---
+
+## Why an API key, and not "Log in with Google"?
+
+You might expect to just authenticate with Google. Two things make that
+impractical right now, which is why this sandbox uses an API key instead:
+
+- **Google deprecated the free "Login with Google" path for Gemini CLI on
+  June 18, 2026.** Personal-account free login no longer serves Gemini CLI;
+  Google moved that experience to a separate tool (Antigravity CLI).
+- **School/Workspace Google accounts** additionally required per-user Google
+  Cloud project setup for OAuth — extra friction for a class.
+
+The **API-key path sidesteps both**: no OAuth browser-callback problem in a
+Codespace, no Cloud project. The one wrinkle: some **education/Workspace accounts
+are restricted from creating AI Studio keys** — if yours is, create the key on a
+personal `@gmail.com`. The key, once created, works anywhere.
+
+---
+
+## What the free tier gives you — and what hitting the limit looks like
+
+The free (unpaid AI Studio key) tier via Gemini CLI is **Flash-only** and capped
+at roughly **250 requests/day per key** (exact numbers now live in your AI Studio
+dashboard at <https://aistudio.google.com/rate-limit>; treat 250/day as the
+documented CLI figure, *subject to change*). Each student uses their own key, so
+it's 250/day *each*.
+
+**When you hit the cap**, requests return **HTTP 429**. `make doctor` reports
+this as *healthy but throttled* (it's not broken — the daily window just resets).
+Keep sessions economical: the `GEMINI.md` in this repo already nudges the agent
+to be sparing with tool calls.
+
+> **One honest caveat:** because Google changed CLI access at the June 2026
+> deprecation, it isn't officially guaranteed that *unpaid* keys keep working in
+> the CLI indefinitely. That's exactly why `make doctor` does a **live
+> round-trip** — you'll know on day one, not mid-semester. If a key that worked
+> stops, create a fresh AI Studio key.
+
+---
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `make setup` | Install Gemini CLI, preload settings, validate the key |
+| `make start` | Launch Gemini CLI (`ARGS="..."` to pass flags), or just run `gemini` |
+| `make doctor` | Check CLI, settings, key, and a live round-trip |
+| `make test` | Run the offline test suite locally (same as CI) |
+
+Configuration: `.env` (local) or Codespace secrets. See `.env.example`. To pin a
+model or CLI version, set `GEMINI_MODEL` / `GEMINI_CLI_VERSION`.
+
+---
+
+## CI/CD
+
+`.github/workflows/ci.yml` runs on **every push and PR** (no secrets needed):
+
+- **lint** — `shellcheck` + `bash -n` on the scripts.
+- **tests** — `tests/` pytest suite: `settings.template.json` preconfigures
+  api-key auth with telemetry off, `devcontainer.json` is valid and declares the
+  `GEMINI_API_KEY` secret, `.env.example` documents the vars with no committed
+  key, and the Makefile/GEMINI.md are present.
+
+A gated **smoke** job does a live `make setup && doctor` — only on manual
+dispatch / a daily schedule (to avoid spending the small free-tier budget on
+every commit), and it self-skips if `GEMINI_API_KEY` isn't set as an Actions
+secret. Run the offline suite locally with `make test`.
+
+---
+
+## Troubleshooting
+
+**`doctor` says HTTP 400/403.** The key was rejected. Create a fresh key at
+<https://aistudio.google.com/apikey> and update the `GEMINI_API_KEY` secret. If a
+previously-working key stopped, see the June-2026 caveat above.
+
+**Everything returns 429.** You hit the ~250/day free cap. Wait for the daily
+reset, or use a different key. Keep sessions lean.
+
+**"Account not eligible" / can't create a key.** Your school/Workspace account is
+restricted from AI Studio. Use a personal `@gmail.com` to create the key.
+
+**`gemini: command not found`.** Run `make setup` (or rebuild the Codespace). The
+CLI needs Node 20+, which the devcontainer image provides.
+
+**Want a stronger model (Gemini 3 / Pro)?** Those need a **paid** key; set
+`GEMINI_MODEL` accordingly. The free tier is Flash-only.

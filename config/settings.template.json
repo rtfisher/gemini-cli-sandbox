@@ -1,0 +1,17 @@
+{
+  "//": "Template for ~/.gemini/settings.json. setup.sh installs this (patching model.name from GEMINI_MODEL) so students are never prompted for auth or telemetry.",
+  "security": {
+    "auth": {
+      "selectedType": "gemini-api-key"
+    }
+  },
+  "privacy": {
+    "usageStatisticsEnabled": false
+  },
+  "ui": {
+    "theme": "Default"
+  },
+  "model": {
+    "name": "gemini-2.5-flash"
+  }
+}

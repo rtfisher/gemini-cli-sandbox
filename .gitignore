@@ -1,0 +1,8 @@
+# secrets / local env
+.env
+
+# python / node noise
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/

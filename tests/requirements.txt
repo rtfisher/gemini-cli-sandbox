@@ -1,0 +1,3 @@
+# Test-only deps.
+pytest>=8
+json5>=0.9        # tolerant parser for devcontainer.json (JSONC with comments)

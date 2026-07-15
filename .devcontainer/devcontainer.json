@@ -1,0 +1,22 @@
+{
+  "name": "gemini-cli-sandbox",
+  // Node 20 base — Gemini CLI requires Node 20+. No Python or extra services
+  // needed. Sized for the free Codespace tier (2 cores / ~8 GB).
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+
+  // Installs Gemini CLI (pinned via GEMINI_CLI_VERSION), preloads
+  // ~/.gemini/settings.json (auth=gemini-api-key, telemetry off), and validates
+  // the key with a live round-trip. Succeeds even before a key is added.
+  "postCreateCommand": "bash scripts/setup.sh",
+
+  // The student's ONLY required setup: add this Codespace secret.
+  //   Settings > Codespaces > Secrets:  GEMINI_API_KEY
+  // Free key (no billing): https://aistudio.google.com/apikey
+  // (No Google OAuth / no GOOGLE_CLOUD_PROJECT — the API-key path avoids both
+  // the Codespaces OAuth-callback problem and the school-account project gate.)
+  "secrets": {
+    "GEMINI_API_KEY": {
+      "description": "Free Google AI Studio API key (no billing). Get one at https://aistudio.google.com/apikey"
+    }
+  }
+}
