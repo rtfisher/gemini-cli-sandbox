@@ -88,6 +88,31 @@ intentional for a low-cost, reproducible workshop. To experiment with them, set
 `experimental.enableAgents` / `experimental.useModelRouter` back to `true` in
 `~/.gemini/settings.json` (and expect much faster quota burn).
 
+### Keeping per-request context modest
+
+You **can't shrink the model's context *window*** — it's a fixed ~1M-token
+property of Flash. What you *can* do is limit how much context the CLI **sends
+per request** (the thing that actually costs tokens). This repo's `settings.json`
+sets:
+
+- `context.includeDirectoryTree: false` — drops the repo directory listing from
+  the first request.
+- `context.discoveryMaxDirs: 1` + `context.fileName: GEMINI.md` — load only the
+  single root memory file, not a walked tree of them.
+- `summarizeToolOutput.run_shell_command.tokenBudget: 2000` — caps how much
+  shell-command output is fed back to the model.
+- `model.maxSessionTurns: 25` — a runaway-session guard. **Caveat:** it does *not*
+  shrink individual requests, and in interactive mode the CLI **stops responding**
+  once the cap is hit (start a new session). Raise or remove it in
+  `~/.gemini/settings.json` if it ever cuts you off mid-task.
+
+Two levers we intentionally left alone: **`tools.core`** (an allowlist that trims
+per-request tool-schema tokens — the biggest single lever, but a wrong tool name
+silently disables a capability, so enable it yourself from the gemini-cli
+"built-in tools" list if you want it), and **`model.compressionThreshold`** (left
+at its default — on a ~1M window it won't trigger within a short free-tier
+session, and each trigger spends an extra request).
+
 > **One honest caveat:** because Google changed CLI access at the June 2026
 > deprecation, it isn't officially guaranteed that *unpaid* keys keep working in
 > the CLI indefinitely. That's exactly why `make doctor` does a **live
