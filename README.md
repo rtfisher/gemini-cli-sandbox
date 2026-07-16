@@ -19,9 +19,10 @@ API key. No Anthropic key, no billing, no credit card.
 1. **Get a free API key** — go to <https://aistudio.google.com/apikey> and create
    a key. It's free, no billing. *(On a school/Workspace Google account that
    blocks AI Studio, use a personal `@gmail.com` — see [Why an API key](#why-an-api-key-and-not-log-in-with-google).)*
-2. **Get your own copy of this repo** — click **Use this template** (or **Fork**)
-   so it lives under *your* account. This matters: Codespaces secrets only attach
-   to repos you own — see [Distributing to students](#distributing-to-students-codespace-secrets-gotcha).
+2. **Get your own copy of this repo** — click **Use this template → Create a new
+   repository** (**not** *Open in a codespace*), or **Fork**, so it lives under
+   *your* account. This matters: Codespaces secrets only attach to repos you own —
+   see [Distributing to students](#distributing-to-students-codespace-secrets-gotcha).
 3. **Add your key as a Codespace secret** — your account **Settings → Codespaces
    → Secrets**, name it **`GEMINI_API_KEY`**, paste the key, and grant it to your
    copy of the repo.
@@ -51,11 +52,15 @@ creates a Codespace **directly on the instructor's repo**, their personal
 `GEMINI_API_KEY` secret is *not* available and `make doctor` reports the key as
 missing. Give each student their **own copy**:
 
-1. **Use this template** (green button) — or **Fork** — to create a copy under
-   the student's own account.
+1. Click **Use this template → Create a new repository** (green button) — or
+   **Fork** — to create a copy under the student's own account. **Do not choose
+   "Open in a codespace"** here: that launches an *unpublished* Codespace with no
+   owned repo behind it, so the secret has nothing to attach to (the same
+   "key not found" problem). You need a real repo first.
 2. In the student's account: **Settings → Codespaces → Secrets**, add
-   `GEMINI_API_KEY` and grant it to that repo (or "All repositories").
-3. Open a Codespace **from their copy**. The secret now attaches.
+   `GEMINI_API_KEY` and grant it to that new repo (or "All repositories"). Do this
+   **before** opening the Codespace — otherwise rebuild the container after adding it.
+3. Open a Codespace **from their new repo**. The secret now attaches.
 
 *(Advanced alternative, no copy needed: in the secret's **Repository access**
 list, explicitly add the instructor's repo. But the template/fork route is
