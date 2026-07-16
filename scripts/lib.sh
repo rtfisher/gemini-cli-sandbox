@@ -11,7 +11,7 @@
 export GEMINI_API_HOST="https://generativelanguage.googleapis.com/v1beta"
 
 # --- defaults (overridable via env / .env / Codespace secrets) ---------------
-: "${GEMINI_MODEL:=gemini-2.5-flash}"   # free unpaid key is Flash-only
+: "${GEMINI_MODEL:=gemini-3.5-flash}"   # current free Flash (2.5-flash was retired for new users Jul 2026)
 : "${GEMINI_CLI_VERSION:=latest}"       # pin a tested version for a class
 export GEMINI_MODEL GEMINI_CLI_VERSION
 

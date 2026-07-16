@@ -11,12 +11,16 @@ API key. No Anthropic key, no billing, no credit card.
 1. **Get a free API key** — go to <https://aistudio.google.com/apikey> and create
    a key. It's free, no billing. *(On a school/Workspace Google account that
    blocks AI Studio, use a personal `@gmail.com` — see [Why an API key](#why-an-api-key-and-not-log-in-with-google).)*
-2. **Add it as a Codespace secret** — repo/account **Settings → Codespaces →
-   Secrets**, name it **`GEMINI_API_KEY`**, paste the key.
-3. **Open the repo in a Codespace.** `postCreateCommand` runs setup automatically:
+2. **Get your own copy of this repo** — click **Use this template** (or **Fork**)
+   so it lives under *your* account. This matters: Codespaces secrets only attach
+   to repos you own — see [Distributing to students](#distributing-to-students-codespace-secrets-gotcha).
+3. **Add your key as a Codespace secret** — your account **Settings → Codespaces
+   → Secrets**, name it **`GEMINI_API_KEY`**, paste the key, and grant it to your
+   copy of the repo.
+4. **Open your copy in a Codespace.** `postCreateCommand` runs setup automatically:
    installs Gemini CLI, preloads `~/.gemini/settings.json` (so you're never
    prompted for auth or telemetry), and checks your key with a live call.
-4. **Verify and run:**
+5. **Verify and run:**
    ```bash
    make doctor     # confirms the key works end-to-end
    make start      # launches Gemini CLI   (or just run: gemini)
@@ -28,6 +32,32 @@ That's the whole flow. Once the key is set, `gemini` just works.
 ```bash
 cp .env.example .env      # put GEMINI_API_KEY in it
 make setup && make doctor && make start
+```
+
+---
+
+## Distributing to students (Codespace secrets gotcha)
+
+Personal Codespaces secrets attach to repositories **you own**. So if a student
+creates a Codespace **directly on the instructor's repo**, their personal
+`GEMINI_API_KEY` secret is *not* available and `make doctor` reports the key as
+missing. Give each student their **own copy**:
+
+1. **Use this template** (green button) — or **Fork** — to create a copy under
+   the student's own account.
+2. In the student's account: **Settings → Codespaces → Secrets**, add
+   `GEMINI_API_KEY` and grant it to that repo (or "All repositories").
+3. Open a Codespace **from their copy**. The secret now attaches.
+
+*(Advanced alternative, no copy needed: in the secret's **Repository access**
+list, explicitly add the instructor's repo. But the template/fork route is
+simpler and more reliable for a class.)*
+
+**Fallback if the secret still isn't detected** — paste the key into a local
+`.env` instead (it's gitignored, so it never leaves the Codespace):
+```bash
+cp .env.example .env       # then edit .env: GEMINI_API_KEY=...
+make setup
 ```
 
 ---
@@ -52,14 +82,15 @@ personal `@gmail.com`. The key, once created, works anywhere.
 
 ## What the free tier gives you — and what hitting the limit looks like
 
-The free (unpaid AI Studio key) tier is **Flash-only**. The trap is that "free"
-is governed by **three separate meters running at once** — trip *any* one and you
-get **HTTP 429**:
+The free (unpaid AI Studio key) tier is **Flash-tier** — the default model is
+`gemini-3.5-flash` (Google retired `gemini-2.5-flash` for new users in Jul 2026).
+"Free" is governed by **three separate meters running at once** — trip *any* one
+and you get **HTTP 429**:
 
 | Meter | Rough free-tier value | What trips it |
 |---|---|---|
-| Requests / day | ~250 (CLI unpaid-key cap) | many prompts across the day |
-| Requests / minute | ~10 | rapid bursts |
+| Requests / day | ~1,500 (reported) | many prompts across the day |
+| Requests / minute | ~15 | rapid bursts |
 | **Tokens / minute** | **~250,000** | **one big turn — this is the usual wall** |
 
 Exact numbers live in your AI Studio dashboard (<https://aistudio.google.com/rate-limit>)
@@ -76,8 +107,8 @@ tokens in ~12 minutes** — because two Gemini CLI defaults quietly multiply usa
   helper agents that each re-send full context. In that test, **21 of 27 requests
   and ~75% of all tokens** came from subagents.
 - **The model router** (`experimental.useModelRouter`, default *on*) makes the
-  effective model `auto` and silently picked `gemini-3.5-flash` instead of the
-  pinned model — and subagents inherit that routing.
+  effective model `auto` and silently overrode the pinned model — and subagents
+  inherit that routing.
 
 So this repo's `settings.json` **disables both**, and `start.sh` pins the model
 three ways (`--model` flag + `GEMINI_MODEL` env + settings) because `model.name`
@@ -158,8 +189,14 @@ secret. Run the offline suite locally with `make test`.
 <https://aistudio.google.com/apikey> and update the `GEMINI_API_KEY` secret. If a
 previously-working key stopped, see the June-2026 caveat above.
 
-**Everything returns 429.** You hit the ~250/day free cap. Wait for the daily
-reset, or use a different key. Keep sessions lean.
+**`doctor` says HTTP 404 "no longer available."** The pinned model was retired —
+Google does this periodically (`gemini-2.5-flash` went 404 for new users in
+Jul 2026). Pull the latest repo and **rebuild the Codespace**, or set
+`GEMINI_MODEL` to a current model (`gemini-3.5-flash`, or the auto-updating alias
+`gemini-flash-latest`) and re-run `make setup`.
+
+**Everything returns 429.** You hit the free daily/per-minute cap. Wait for the
+reset (per-minute limits clear in ~60s), or use a different key. Keep sessions lean.
 
 **"Account not eligible" / can't create a key.** Your school/Workspace account is
 restricted from AI Studio. Use a personal `@gmail.com` to create the key.
@@ -167,5 +204,6 @@ restricted from AI Studio. Use a personal `@gmail.com` to create the key.
 **`gemini: command not found`.** Run `make setup` (or rebuild the Codespace). The
 CLI needs Node 20+, which the devcontainer image provides.
 
-**Want a stronger model (Gemini 3 / Pro)?** Those need a **paid** key; set
-`GEMINI_MODEL` accordingly. The free tier is Flash-only.
+**Want a stronger model (Gemini 3 Pro)?** Pro needs a **paid** key; set
+`GEMINI_MODEL` accordingly. Flash models — including the default
+`gemini-3.5-flash` — are free.

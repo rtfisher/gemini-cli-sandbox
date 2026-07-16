@@ -74,10 +74,17 @@ if key_present; then
       note "$(jq -r '.error.message // empty' "$body" 2>/dev/null)"
       note "if this key used to work, note that unpaid keys' CLI access changed after the June 2026 deprecation — try a fresh AI Studio key"
       FAIL=1;;
+    404)
+      err "model '${GEMINI_MODEL}' unavailable (HTTP 404)"
+      note "$(jq -r '.error.message // empty' "$body" 2>/dev/null)"
+      note "this usually means the model was deprecated/retired. Set GEMINI_MODEL to a current"
+      note "model (e.g. gemini-3.5-flash, or the alias gemini-flash-latest) and re-run 'make setup'."
+      note "if you already pulled the latest repo, rebuild the Codespace so the new default applies."
+      FAIL=1;;
     429)
       RATELIMITED=1
-      warn "rate-limited (HTTP 429) — the free-tier daily cap is hit (throttled, not broken)"
-      note "free unpaid key: ~250 requests/day, Flash-only; resets on a rolling daily window";;
+      warn "rate-limited (HTTP 429) — the free-tier cap is hit (throttled, not broken)"
+      note "free tier (gemini-3.5-flash): reported ~1,500 requests/day; resets on a rolling daily window";;
     000) err "no response (timeout/network)"; FAIL=1;;
     *)   err "unexpected HTTP $code"; note "$(head -c 300 "$body" 2>/dev/null)"; FAIL=1;;
   esac
@@ -89,8 +96,8 @@ fi
 echo
 note "Free-tier reality (subject to change; live numbers: aistudio.google.com/rate-limit):"
 note "  Three separate meters run at once — you can trip ANY of them and get HTTP 429:"
-note "    * ~250 requests/day (CLI unpaid-key cap, Flash-only)"
-note "    * ~10 requests/minute (burst limit)"
+note "    * ~1,500 requests/day (reported for gemini-3.5-flash free tier)"
+note "    * ~15 requests/minute (burst limit)"
 note "    * ~250K tokens/minute (a single big/subagent turn can blow this alone)"
 note "  The per-minute TOKEN limit — not the daily count — is the usual wall. Keeping"
 note "  subagents off (above) is the biggest lever, since each one re-sends full context."

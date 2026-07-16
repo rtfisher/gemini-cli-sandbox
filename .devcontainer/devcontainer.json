@@ -16,7 +16,7 @@
   // model.name alone gets overridden by the router/hardcoded defaults.
   // Advanced override: run `gemini --model <name>`.
   "containerEnv": {
-    "GEMINI_MODEL": "gemini-2.5-flash"
+    "GEMINI_MODEL": "gemini-3.5-flash"
   },
 
   // The student's ONLY required setup: add this Codespace secret.

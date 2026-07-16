@@ -63,6 +63,10 @@ if key_present; then
       note "$(jq -r '.error.message // "check the key and that ${GEMINI_MODEL} is available to it"' "$body" 2>/dev/null)"
       note "Get a fresh free key at https://aistudio.google.com/apikey and set it as Codespace secret GEMINI_API_KEY."
       note "Continuing; re-run 'make doctor' after fixing.";;
+    404)
+      err "model '${GEMINI_MODEL}' unavailable (HTTP 404) — likely deprecated/retired."
+      note "set GEMINI_MODEL to a current model (e.g. gemini-3.5-flash) and re-run 'make setup';"
+      note "if you just pulled the repo, rebuild the Codespace so the new default applies.";;
     429) warn "key valid but rate-limited right now (HTTP 429) — free-tier cap hit. It resets on a rolling daily window.";;
     000) warn "could not reach the Gemini API (network). Re-run 'make doctor' later.";;
     *)   warn "unexpected HTTP $code from Gemini API; see 'make doctor'.";;

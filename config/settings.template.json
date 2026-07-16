@@ -12,7 +12,7 @@
     "theme": "Default"
   },
   "model": {
-    "name": "gemini-2.5-flash",
+    "name": "gemini-3.5-flash",
     "maxSessionTurns": 25
   },
   "experimental": {

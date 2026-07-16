@@ -5,7 +5,8 @@ Gemini agent) work here, keep these facts in mind:
 
 - This is a teaching environment running on the **free tier** (an unpaid Google
   AI Studio API key). The model is a **Flash-class model**, and the daily request
-  budget is small (~250 requests/day). **Be economical**: prefer a few
+  budget is limited (a free Flash key: reportedly ~1,500 requests/day plus tight
+  per-minute request and token caps). **Be economical**: prefer a few
   well-scoped actions over many small tool calls, and avoid long unnecessary
   back-and-forth that burns the daily quota.
 - Keep responses **concise and instructive** — the audience is students learning
